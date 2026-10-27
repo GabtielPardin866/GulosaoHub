@@ -1,12 +1,14 @@
 
 --[[
-    GULOSÃO HUB V7
-    AIMBOT + ESP
-    Interface preta e roxa
+    GULOSÃO HUB V8
+    HARD AIMBOT + ESP + SMOOTH 0-10
 
     RightShift = Mostrar/ocultar menu
     Botão direito = Travar mira
     G = Ativar/desativar Aimbot
+
+    Smooth 0  = Sem ajuste de câmera
+    Smooth 10 = Travamento instantâneo
 ]]
 
 local Players = game:GetService("Players")
@@ -16,20 +18,20 @@ local RS = game:GetService("RunService")
 local LP = Players.LocalPlayer
 local PG = LP:WaitForChild("PlayerGui")
 
--- Remove execução anterior
+-- Remover versão anterior
 if _G.GulosaoCleanup then
     pcall(_G.GulosaoCleanup)
 end
 
 local cfg = {
     AimEnabled = true,
-    AutoAim = false,
+    AutoAim = true,
     HeadOnly = true,
     TeamCheck = true,
     WallCheck = true,
-    FOV = 220,
-    StickyFOV = 400,
-    Smoothness = 1,
+    FOV = 600,
+    StickyFOV = 1000,
+    Smoothness = 10,
 
     ESPEnabled = false,
     ESPNames = true,
@@ -58,7 +60,7 @@ end
 -- INTERFACE
 
 local gui = Instance.new("ScreenGui")
-gui.Name = "GulosaoHubV7"
+gui.Name = "GulosaoHubV8"
 gui.ResetOnSpawn = false
 gui.Parent = PG
 
@@ -81,7 +83,7 @@ local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, -60, 0, 45)
 title.Position = UDim2.fromOffset(15, 5)
 title.BackgroundTransparency = 1
-title.Text = "GULOSÃO HUB V7"
+title.Text = "GULOSÃO HUB V8"
 title.TextColor3 = PURPLE
 title.Font = Enum.Font.GothamBold
 title.TextSize = 20
@@ -213,7 +215,7 @@ end
 local pages = {}
 
 pages.AIM = function()
-    label("HARD AIMBOT")
+    label("HARD AIMBOT V8")
 
     toggle("Aimbot", "AimEnabled")
     toggle("Automatic Lock", "AutoAim")
@@ -221,9 +223,9 @@ pages.AIM = function()
     toggle("Team Check", "TeamCheck")
     toggle("Wall Check", "WallCheck")
 
-    setting("FOV", "FOV", 50, 600, 25)
-    setting("Sticky FOV", "StickyFOV", 100, 800, 50)
-    setting("Smoothness", "Smoothness", 0.1, 1, 0.1)
+    setting("FOV", "FOV", 50, 1000, 50)
+    setting("Sticky FOV", "StickyFOV", 100, 1500, 50)
+    setting("Smooth 0-10", "Smoothness", 0, 10, 0.5)
 
     makeButton(content, "CLEAR TARGET", function()
         target = nil
@@ -241,10 +243,10 @@ pages.ESP = function()
 end
 
 pages.INFO = function()
-    label("GULOSÃO HUB V7")
+    label("GULOSÃO HUB V8")
 
     local info = Instance.new("TextLabel")
-    info.Size = UDim2.new(1, 0, 0, 150)
+    info.Size = UDim2.new(1, 0, 0, 165)
     info.BackgroundTransparency = 1
     info.TextColor3 = Color3.new(1, 1, 1)
     info.TextWrapped = true
@@ -254,6 +256,8 @@ pages.INFO = function()
         "RightShift: mostrar/esconder menu\n" ..
         "Botão direito: travar mira\n" ..
         "G: ativar/desativar Aimbot\n\n" ..
+        "Smooth 0 = desligado\n" ..
+        "Smooth 10 = travamento instantâneo\n\n" ..
         "ESP: nomes, distância e destaque roxo"
     info.Parent = content
 end
@@ -564,7 +568,7 @@ table.insert(connections, UIS.InputEnded:Connect(
 
 -- LOOP AIMBOT
 
-local renderName = "GulosaoHubV7Aim"
+local renderName = "GulosaoHubV8Aim"
 
 RS:BindToRenderStep(
     renderName,
@@ -623,14 +627,25 @@ RS:BindToRenderStep(
             part.Position
         )
 
-        camera.CFrame = current:Lerp(
-            desired,
-            math.clamp(cfg.Smoothness, 0.1, 1)
+        local smooth = math.clamp(
+            cfg.Smoothness,
+            0,
+            10
         )
+
+        if smooth >= 10 then
+            camera.CFrame = desired
+        elseif smooth > 0 then
+            camera.CFrame = current:Lerp(
+                desired,
+                smooth / 10
+            )
+        end
     end
 )
 
--- Atualização do ESP
+-- ESP LOOP
+
 local espAccumulator = 0
 
 table.insert(connections, RS.Heartbeat:Connect(
@@ -649,6 +664,7 @@ table.insert(connections, RS.Heartbeat:Connect(
 table.insert(connections,
     Players.PlayerRemoving:Connect(function(player)
         removeESP(player)
+
         if target == player then
             target = nil
         end
@@ -678,4 +694,4 @@ _G.GulosaoCleanup = cleanup
 
 close.MouseButton1Click:Connect(cleanup)
 
-print("GulosãoHub V7 carregado!")
+print("GulosãoHub V8 carregado!")
